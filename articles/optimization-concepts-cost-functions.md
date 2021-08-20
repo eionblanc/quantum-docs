@@ -121,8 +121,9 @@ to obtain:
 $$ \mathrm{cost}' = \left(\sum_i w_ix_i\right)^2 = \sum_{ij} w_iw_jx_ix_j\text{ .} $$
 
 When multiplied out, this cost function has more terms than the previous one,
-but it happens to be in the (polynomial) form supported by our optimizers
-(namely, an Ising cost function).
+but together these forms represent the polynomial forms supported by our
+optimizers (namely, cost functions as sums of monomial terms and squared
+linear combinations).
 
 ### Ising cost function
 

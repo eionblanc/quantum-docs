@@ -12,11 +12,12 @@ uid: microsoft.quantum.optimization.express-problem
 
 # Express an optimization problem
 
-To express a simple problem to be solved, create an instance of a `Problem` and set the `problem_type` to either `ProblemType.ising` or
-`ProblemType.pubo`. For more information, see [`ProblemType`](xref:microsoft.quantum.optimization.problem-type).
+To express a simple problem to be solved, create an instance of a `Problem` and set the `problem_type`
+to one of `ProblemType.ising`, `ProblemType.pubo`, or their grouped analogues,
+see [`ProblemType`](xref:microsoft.quantum.optimization.problem-type).
 
 ```py
-from azure.quantum.optimization import Problem, ProblemType, Term, ParallelTempering
+from azure.quantum.optimization import Problem, ProblemType, Term, GroupedTerm, GroupType, ParallelTempering
 
 problem = Problem(name="My First Problem", problem_type=ProblemType.ising)
 ```
@@ -38,30 +39,40 @@ problem.add_terms(terms=terms)
 ```
 
 > [!NOTE]
-> As descrbed below, there are multiple ways to supply terms to the problem.
+> As described below, there are multiple ways to supply terms to the problem.
 
 ## Ways to supply problem terms
 
 There are three ways to supply terms for a [`Problem`](xref:microsoft.quantum.optimization.problem): in the
-constructor, individually, and as a list of `Term` objects.
+constructor, individually, and as a list of `Term` and `GroupedTerm` objects.
 
 ### In the constructor
 
-You can supply an array of `Term` objects in the constructor of a `Problem`.
+You can supply an array of `Term` and `GroupedTerm` objects in the constructor of a `Problem`.
+If grouped terms are included in the terms list, the problem type should reflect the grouped
+nature via either `ProblemType.ising_grouped` or `ProblemType.pubo_grouped`.
 
 ```py
 terms = [
     Term(c=-9, indices=[0]),
     Term(c=-3, indices=[1,0]),
-    Term(c=5, indices=[2,0])
+    Term(c=5, indices=[2,0]),
+    GroupedTerm(
+        term_type=GroupType.squared_linear_combination,
+        terms=[
+            Term(c=1, indices=[0]),
+            Term(c=-1, indices=[1]),
+        ],
+        c=2
+    )
 ]
 
-problem = Problem(name="My Difficult Problem", terms=terms)
+problem = Problem(name="My Difficult Problem", terms=terms, problem_type=ProblemType.ising_grouped)
 ```
 
 ### Individually
 
-You can supply each term individually by calling the `add_term` method on the `Problem`.
+You can supply each `Term` individually by calling the `add_term` method on the `Problem`.
 
 ```py
 problem = Problem(name="My Difficult Problem", problem_type=ProblemType.ising)
@@ -69,6 +80,34 @@ problem.add_term(c=-9, indices=[0])
 problem.add_term(c=-3, indices=[1,0])
 problem.add_term(c=5, indices=[2,0])
 ```
+
+You can supply each `GroupedTerm` individually by calling the particular method on the `Problem`
+according to the particular grouped term type, or through an overloaded `add_terms` method.
+When grouped terms are added to a problem, the problem type will automatically be converted to the
+appropriate grouped version as needed.
+
+Currently, squared linear combinations are the only enabled grouped terms and may be added via
+`add_slc_term` in two equivalent ways below and via a corresponding `add_terms` wrapper.
+
+
+```python
+problem = Problem(name="My Difficult Problem", problem_type=ProblemType.ising)
+subterms = [
+    Term(c=1, indices=[0]),
+    Term(c=-2, indices=[1]),
+    Term(c=1, indices=[2]),
+    Term(c=-1, indices=[])
+]
+problem.add_slc_term(terms=subterms, c=2)
+problem.add_slc_term(
+    terms=[(1,0), (-2,1), (1,2), (-1,None)],
+    c=2
+)
+problem.add_terms(
+    terms=subterms, term_type=GroupType.squared_linear_combination, c=2)
+)
+```
+
 
 ### Add a list of terms
 
